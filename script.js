@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch tasks from server
     async function fetchTasks() {
-        const response = await fetch('/tasks');
+        const response = await fetch('/tm/tasks');
         const tasks = await response.json();
         taskList.innerHTML = '';
         tasks.forEach(task => renderTask(task));
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: taskInput.value,
             completed: false
         };
-        const response = await fetch('/tasks', {
+        const response = await fetch('/tm/tasks', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newTask)
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toggle task completion
     async function toggleTaskCompletion(id, completed) {
-        const response = await fetch(`/tasks/${id}`, {
+        const response = await fetch(`/tm/tasks/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ completed })
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Delete a task
     async function deleteTask(id) {
-        const response = await fetch(`/tasks/${id}`, { method: 'DELETE' });
+        const response = await fetch(`/tm/tasks/${id}`, { method: 'DELETE' });
 
         if (response.ok) {
             document.querySelector(`li[data-id="${id}"]`).remove();
