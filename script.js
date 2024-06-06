@@ -5,36 +5,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch tasks from server
     async function fetchTasks() {
-        const response = await fetch('/tm/tasks');
-        const tasks = await response.json();
-        taskList.innerHTML = '';
-        tasks.forEach(task => renderTask(task));
+        try {
+            const response = await fetch('/tasks');
+            const tasks = await response.json();
+            taskList.innerHTML = '';
+            tasks.forEach(task => renderTask(task));
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+        }
     }
 
     // Render a task
     function renderTask(task) {
         const li = document.createElement('li');
-        li.textContent = task.title;
+        li.className = task.completed ? 'completed' : '';
         li.dataset.id = task._id;
-        if (task.completed) {
-            li.classList.add('completed');
-        }
+        li.innerHTML = `
+            <span>${task.title}</span>
+            <div class="task-actions">
+                <button class="toggle-btn">${task.completed ? 'Undo' : 'Complete'}</button>
+                <button class="delete-btn">Delete</button>
+            </div>
+        `;
 
-        const actions = document.createElement('div');
-        actions.className = 'task-actions';
+        li.querySelector('.toggle-btn').onclick = () => toggleTaskCompletion(task._id, !task.completed);
+        li.querySelector('.delete-btn').onclick = () => deleteTask(task._id);
 
-        const toggleButton = document.createElement('button');
-        toggleButton.textContent = task.completed ? 'Undo' : 'Complete';
-        toggleButton.onclick = () => toggleTaskCompletion(task._id, !task.completed);
-        actions.appendChild(toggleButton);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        deleteButton.className = 'delete';
-        deleteButton.onclick = () => deleteTask(task._id);
-        actions.appendChild(deleteButton);
-
-        li.appendChild(actions);
         taskList.appendChild(li);
     }
 
@@ -45,50 +41,59 @@ document.addEventListener('DOMContentLoaded', () => {
             title: taskInput.value,
             completed: false
         };
-        const response = await fetch('/tm/tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newTask)
-        });
+        try {
+            const response = await fetch('/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTask)
+            });
 
-        if (response.ok) {
-            const createdTask = await response.json();
-            renderTask(createdTask);
-            taskInput.value = '';
-        } else {
-            console.error('Failed to add task');
+            if (response.ok) {
+                const createdTask = await response.json();
+                renderTask(createdTask);
+                taskInput.value = '';
+            } else {
+                console.error('Failed to add task');
+            }
+        } catch (error) {
+            console.error('Error adding task:', error);
         }
     });
 
     // Toggle task completion
     async function toggleTaskCompletion(id, completed) {
-        const response = await fetch(`/tm/tasks/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ completed })
-        });
+        try {
+            const response = await fetch(`/tasks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed })
+            });
 
-        if (response.ok) {
-            const updatedTask = await response.json();
-            const taskElement = document.querySelector(`li[data-id="${id}"]`);
-            if (completed) {
-                taskElement.classList.add('completed');
+            if (response.ok) {
+                const updatedTask = await response.json();
+                const taskElement = document.querySelector(`li[data-id="${id}"]`);
+                taskElement.className = completed ? 'completed' : '';
+                taskElement.querySelector('.toggle-btn').textContent = completed ? 'Undo' : 'Complete';
             } else {
-                taskElement.classList.remove('completed');
+                console.error('Failed to update task');
             }
-        } else {
-            console.error('Failed to update task');
+        } catch (error) {
+            console.error('Error updating task:', error);
         }
     }
 
-    // Delete a task
+    // Delete a tasks
     async function deleteTask(id) {
-        const response = await fetch(`/tm/tasks/${id}`, { method: 'DELETE' });
+        try {
+            const response = await fetch(`/tasks/${id}`, { method: 'DELETE' });
 
-        if (response.ok) {
-            document.querySelector(`li[data-id="${id}"]`).remove();
-        } else {
-            console.error('Failed to delete task');
+            if (response.ok) {
+                document.querySelector(`li[data-id="${id}"]`).remove();
+            } else {
+                console.error('Failed to delete task');
+            }
+        } catch (error) {
+            console.error('Error deleting task:', error);
         }
     }
 
